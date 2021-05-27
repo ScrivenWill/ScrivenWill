@@ -1,5 +1,5 @@
 - 👋 Hi, I’m @ScrivenWill
-- 👀 I’m interested in Small scale projects focusing on learning and developing mew skills
+- 👀 I’m interested in Small scale projects focusing on learning and developing new skills
 - 🌱 I’m currently learning C and C++
 - 💞️ I’m looking to collaborate on anything where I can learn something new or reinforce previous skills
 - 📫 How to reach me scriven.will@gmail.com
