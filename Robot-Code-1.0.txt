@@ -1,0 +1,90 @@
+#include "mbed.h"
+//Need to add a condition to change the Launcher status
+int LauncherStatus = 0; //Decider to check if the launcher should prepare for use
+
+struct Wheel //Creating the variables which each wheel will have
+{
+    float PWMval; //the speed of the wheel, ranges from 0 to 1
+};
+
+class Sensor //Class fcn to declare inputs and outputs
+{
+    public: //Creating variables that will be inputs and outputs
+    float Vin, Diff, Vout;
+    
+    //Creating variables that are fixed and are pre-calculated from the sensor data
+    float Neutral = 1.6, Vmax = 2.8, Vmin = 0;
+    
+    void direction() //subfunction to determine the direction the robot it currently travelling
+    {
+        AnalogIn analog_value(A3); //recording current value from sensor input - assuming A3 is the input position
+        Vin = 0; //Initialising the first value to be neutral
+        
+        while(1)
+        {
+            Vin = analog_value.read();
+            Diff = Vin - Neutral;
+        }
+    }    
+};
+
+void SensorFcn() //This fcn produces a PWM signal that will output to the wheels how much of a turn in needed and in what direction (output range is from -1 to +1)
+{
+    Sensor Voltage; //Calling the sensor class
+    
+    while(1)
+    {
+        Voltage.direction(); //Calling the function which determines the direction of rotation
+    
+        if(Voltage.Vin > Voltage.Neutral) 
+        {
+            Voltage.Vout = Voltage.Diff / ( Voltage.Vmax - Voltage.Neutral ); //Vout is a positve value to indicate a left turn is needed
+        }
+        if(Voltage.Vin < Voltage.Neutral)
+        {
+            Voltage.Vout = Voltage.Diff / ( Voltage.Vmin + Voltage.Neutral ); //Vout is a negative value to indicate a right turn is needed
+        }
+    }
+}
+
+void WheelFcn() //Fcn to turn the wheels, if a left turn is needed then the left wheel is stopped to turn in that direction, the wheels will also be constantly turning so to not stop completely
+{
+    Sensor Voltage;
+    
+    struct Wheel Left; //Declaring the wheels that we have to use
+    struct Wheel Right;
+    
+    while(LauncherStatus == 0)
+    {
+        if(Voltage.Vout > 0) //Positive value so left turn is needed (Right wheel is used to turn)
+        {
+            Left.PWMval = 0;
+            Right.PWMval = Voltage.Vout;
+            
+            Left.PWMval = Left.PWMval/2 + 0.2;
+            Right.PWMval = Right.PWMval/2 + 0.2;
+        } 
+        if(Voltage.Vout < 0) //Negative value so left turn is needed (Left wheel is used to turn)
+        {
+            Left.PWMval = -Voltage.Vout;
+            Right.PWMval = 0;
+            
+            Left.PWMval = Left.PWMval/2 + 0.2;
+            Right.PWMval = Right.PWMval/2 + 0.2;
+        }
+    }
+    while(LauncherStatus == 1) //When the bumper is hit the robot should stop moving
+    {
+        Left.PWMval = 0;
+        Right.PWMval = 0;
+    }
+}
+
+int main()
+{
+    while(1)
+    {
+        SensorFcn();
+        WheelFcn();
+    }
+}
